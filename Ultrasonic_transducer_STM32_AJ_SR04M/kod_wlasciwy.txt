@@ -1,0 +1,64 @@
+#define  Trig_Port D2_GPIO_Port
+#define Trig_Pin D2_Pin
+#define  Echo_Port D7_GPIO_Port
+#define  Echo_Pin D7_Pin
+
+
+/* Private variables ---------------------------------------------------------*/
+TIM_HandleTypeDef htim7;
+TIM_HandleTypeDef htim16; //zegar do pomiaru dlugosc sygnalu wysokiego na pinei
+//echo
+
+UART_HandleTypeDef huart2; //przesyalnei wynikow pomiarow przez uart
+
+
+/* USER CODE BEGIN PV */
+volatile uint32_t rise_time = 0;
+	volatile uint32_t pulse_width_us = 0;
+	volatile uint8_t measurement_done = 0;
+/* USER CODE END PV */
+
+
+/* USER CODE BEGIN PFP */
+
+
+void send_measurement(uint32_t time_us, float distance_cm) {
+//Wyslanei wynikow przez uart czasu pomiędzy przybyciem i wsyalniem fali oraz //przelicozny dystans 
+    char buffer[100];
+    int len = snprintf(buffer, sizeof(buffer), "Czas: %lu us | Odleglosc: %.2f cm\r\n", time_us, distance_cm);
+    HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, 100);
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+//przerwanie od stanu wysokiego/nieskiego  na pinie oraz pomiar czas
+//w którym jest stan wysoki
+    if (GPIO_Pin == D7_Pin) {
+        if (HAL_GPIO_ReadPin(D7_GPIO_Port, D7_Pin) == GPIO_PIN_SET) {
+            __HAL_TIM_SET_COUNTER(&htim16, 0); // Start pomiaru
+        } else {
+            uint32_t fall_time = __HAL_TIM_GET_COUNTER(&htim16);
+            float distance_cm = (fall_time * 0.0343f) / 2.0f;
+            send_measurement(fall_time, distance_cm);
+        }
+    }
+}
+ 
+void HCSR04_Trigger(void) {
+//sygnal wymsuzajacy pomiar 
+    HAL_GPIO_WritePin(D2_GPIO_Port, D2_Pin, GPIO_PIN_SET);
+    __HAL_TIM_SET_COUNTER(&htim7, 0);
+    while (__HAL_TIM_GET_COUNTER(&htim7) < 12); // około 10 µs
+    HAL_GPIO_WritePin(D2_GPIO_Port, D2_Pin, GPIO_PIN_RESET);
+}
+
+
+ while (1)
+  {
+
+
+  HCSR04_Trigger();
+
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+  }

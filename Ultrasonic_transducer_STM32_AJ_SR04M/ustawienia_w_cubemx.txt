@@ -1,0 +1,10 @@
+pezrwania na pinie echo 
+ GPIO mode "External interrupt mode with Rising/Falling edge
+GPIO - PULL DOWN
+
+TIM7  Prescaler 79, Counter Period 65535 - taktowanie linii ABB - 80 MHZ
+(1 cykl timera to 1 us)
+
+
+TIM16  Prescaler 79, Counter Period 65535 - taktowanie linii ABB - 80 MHZ
+(1 cykl timera to 1 us)
